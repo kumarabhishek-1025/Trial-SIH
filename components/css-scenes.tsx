@@ -39,21 +39,21 @@ function Rings() {
 export function BatteryPackCSS({ charge = 80, scan = false, risk = 'low' }: any) {
   const riskColor = risk === 'high' ? red : risk === 'medium' ? amber : cyan
   return (
-    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', perspective: 900 }}>
       <Rings />
       <Particles count={25} color={riskColor} />
-      <div style={{ position: 'relative', zIndex: 2, animation: 'cssFloat 4s ease-in-out infinite', textAlign: 'center' }}>
-        <div style={{ width: 40, height: 8, background: '#1a3a4c', borderRadius: '4px 4px 0 0', margin: '0 auto -2px', position: 'relative', zIndex: 1 }} />
-        <div style={{ width: 180, padding: '10px 12px', background: 'linear-gradient(135deg, #142838, #0c1e2c)', border: '2px solid #1a3a4c', borderRadius: 12, boxShadow: `0 0 30px ${riskColor}22` }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+      <div style={{ position: 'relative', zIndex: 2, animation: 'cssFloat 4s ease-in-out infinite', textAlign: 'center', transform: 'translateX(12%) rotateX(10deg) rotateY(-18deg)', transformStyle: 'preserve-3d' }}>
+        <div style={{ width: 66, height: 12, background: 'linear-gradient(90deg, #183b4d, #32647a)', borderRadius: '6px 6px 0 0', margin: '0 auto -2px', position: 'relative', zIndex: 1, boxShadow: `0 0 18px ${cyan}33` }} />
+        <div style={{ width: 300, padding: '16px 18px', background: 'linear-gradient(135deg, #102d3d, #071722)', border: `2px solid ${riskColor}66`, borderRadius: 16, boxShadow: `18px 24px 0 #02070b, 0 0 42px ${riskColor}33`, transformStyle: 'preserve-3d' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 7, transform: 'translateZ(18px)' }}>
             {Array.from({ length: 16 }, (_, i) => {
               const isWarn = i === 7
               const isAcc = i === 12
               const bg = isWarn ? amber : isAcc ? violet : lime
               return (
                 <div key={i} style={{
-                  aspectRatio: 1, borderRadius: 4, position: 'relative', overflow: 'hidden',
-                  background: '#0c1e2c', border: '1px solid #1a3a4c',
+                  aspectRatio: 1.18, borderRadius: 6, position: 'relative', overflow: 'hidden',
+                  background: 'linear-gradient(145deg, #163b4a, #081723 70%)', border: `1px solid ${bg}55`, boxShadow: `inset 0 8px 16px ${bg}12, 0 0 12px ${bg}18`,
                   animation: scan ? `cssScan 1.5s ${i * 0.08}s ease-in-out infinite` : `cssGlow 3s ${i * 0.15}s ease-in-out infinite`,
                 }}>
                   <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%', background: `linear-gradient(to top, ${bg}33, ${bg}08)`, borderRadius: '0 0 2px 2px' }} />

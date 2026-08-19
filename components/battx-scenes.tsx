@@ -10,106 +10,13 @@ const cyan = '#23d9ff'
 const violet = '#8d6cff'
 const lime = '#b7f36b'
 const amber = '#ffb14a'
-
 type SceneMode = 'hero' | 'owner' | 'admin' | 'vehicle'
 
-function EnergyArc({ radius, offset, color = cyan, speed = 1 }: { radius: number; offset: number; color?: string; speed?: number }) {
-  const ref = useRef<THREE.Group>(null)
-  const points = useMemo(() => {
-    const curve = new THREE.EllipseCurve(0, 0, radius, radius * .62, 0, Math.PI * 2, false, offset)
-    return curve.getPoints(80).map((p) => new THREE.Vector3(p.x, p.y, 0))
-  }, [radius, offset])
-  const geometry = useMemo(() => new THREE.BufferGeometry().setFromPoints(points), [points])
-  useFrame(({ clock }) => { if (ref.current) ref.current.rotation.z = clock.getElapsedTime() * speed * .18 })
-  return <group ref={ref} rotation={[Math.PI / 2, 0, 0]}>
-    <lineSegments geometry={geometry}>
-      <lineBasicMaterial color={color} transparent opacity={.7} />
-    </lineSegments>
-  </group>
-}
+function EnergyArc({ radius, offset, color = cyan, speed = 1 }: { radius: number; offset: number; color?: string; speed?: number }) { const ref = useRef<THREE.Group>(null); const points = useMemo(() => { const curve = new THREE.EllipseCurve(0, 0, radius, radius * .62, 0, Math.PI * 2, false, offset); return curve.getPoints(64).map(p => new THREE.Vector3(p.x, p.y, 0)) }, [radius, offset]); const geometry = useMemo(() => new THREE.BufferGeometry().setFromPoints(points), [points]); useFrame(({ clock }) => { if (ref.current) ref.current.rotation.z = clock.getElapsedTime() * speed * .18 }); return <group ref={ref} rotation={[Math.PI / 2, 0, 0]}><line geometry={geometry}><lineBasicMaterial color={color} transparent opacity={.7} /></line></group> }
+function SensorRing({ radius, color = cyan, speed = 1 }: { radius: number; color?: string; speed?: number }) { const ref = useRef<THREE.Mesh>(null); useFrame(({ clock }) => { if (!ref.current) return; ref.current.rotation.z = clock.getElapsedTime() * speed * .22; ref.current.rotation.x = Math.sin(clock.getElapsedTime() * .45) * .13 + Math.PI / 2 }); return <mesh ref={ref}><torusGeometry args={[radius, .012, 8, 72]} /><meshBasicMaterial color={color} transparent opacity={.62} /></mesh> }
+export function ReactorCore({ pulse = false }: { pulse?: boolean }) { const ref = useRef<THREE.Mesh>(null); useFrame(({ clock }) => { if (!ref.current) return; const t = clock.getElapsedTime(); ref.current.rotation.y = t * .35; ref.current.scale.setScalar(pulse ? 1 + Math.sin(t * 5) * .07 : 1 + Math.sin(t * 1.4) * .025) }); return <group><mesh ref={ref}><icosahedronGeometry args={[.72, 2]} /><MeshTransmissionMaterial color={cyan} emissive={cyan} emissiveIntensity={1.6} roughness={.12} thickness={.5} transmission={.75} /></mesh><mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[.95, .035, 12, 72]} /><meshBasicMaterial color={violet} transparent opacity={.8} /></mesh><Sparkles count={pulse ? 48 : 18} scale={3.2} size={2} speed={pulse ? 1.8 : .55} color={pulse ? amber : cyan} /></group> }
 
-function SensorRing({ radius, color = cyan, speed = 1 }: { radius: number; color?: string; speed?: number }) {
-  const ref = useRef<THREE.Mesh>(null)
-  useFrame(({ clock }) => {
-    if (!ref.current) return
-    ref.current.rotation.z = clock.getElapsedTime() * speed * .22
-    ref.current.rotation.x = Math.sin(clock.getElapsedTime() * .45) * .13 + Math.PI / 2
-  })
-  return <mesh ref={ref}><torusGeometry args={[radius, .012, 8, 96]} /><meshBasicMaterial color={color} transparent opacity={.62} /></mesh>
-}
-
-export function ReactorCore({ pulse = false }: { pulse?: boolean }) {
-  const ref = useRef<THREE.Mesh>(null)
-  useFrame(({ clock }) => {
-    if (!ref.current) return
-    const t = clock.getElapsedTime()
-    ref.current.rotation.y = t * .35
-    const scale = pulse ? 1 + Math.sin(t * 5) * .07 : 1 + Math.sin(t * 1.4) * .025
-    ref.current.scale.setScalar(scale)
-  })
-  return <group>
-    <mesh ref={ref}><icosahedronGeometry args={[.72, 2]} /><MeshTransmissionMaterial color={cyan} emissive={cyan} emissiveIntensity={1.6} roughness={.12} thickness={.5} transmission={.75} /></mesh>
-    <mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[.95, .035, 12, 96]} /><meshBasicMaterial color={violet} transparent opacity={.8} /></mesh>
-    <Sparkles count={pulse ? 90 : 45} scale={3.2} size={2.4} speed={pulse ? 1.8 : .55} color={pulse ? amber : cyan} />
-  </group>
-}
-
-export function BatteryStack({ exploded = false, scan = false, charge = .8, selected = 7 }: { exploded?: boolean; scan?: boolean; charge?: number; selected?: number }) {
-  const group = useRef<THREE.Group>(null)
-  const cells = useMemo(() => Array.from({ length: 16 }, (_, i) => ({ x: i % 4, z: Math.floor(i / 4), health: i === 7 ? amber : i === 12 ? violet : lime })), [])
-  useFrame(({ clock }, delta) => {
-    if (!group.current) return
-    group.current.rotation.y += delta * .12
-    group.current.position.y = Math.sin(clock.getElapsedTime() * .7) * .04
-  })
-  return <group ref={group} scale={1.12}>
-    <mesh position={[0, -1.1, 0]}><boxGeometry args={[4.8, .18, 3]} /><meshStandardMaterial color="#0c1e2c" metalness={.88} roughness={.2} /></mesh>
-    {cells.map((cell, i) => {
-      const x = (cell.x - 1.5) * (exploded ? 1.28 : 1)
-      const z = (cell.z - 1.5) * (exploded ? 1.25 : 1)
-      const y = exploded ? (i % 3) * .26 : 0
-      const isSelected = selected === i
-      return <group key={i} position={[x, y, z]}>
-        <mesh><boxGeometry args={[.78, 1.72, .78]} /><meshStandardMaterial color={isSelected ? '#38566a' : '#192e3e'} metalness={.7} roughness={.25} /></mesh>
-        <mesh position={[0, .02, .405]}><boxGeometry args={[.3, 1.36, .035]} /><meshStandardMaterial color={cell.health} emissive={cell.health} emissiveIntensity={isSelected || scan ? 2.5 : .9} /></mesh>
-        <mesh position={[0, .7, 0]}><cylinderGeometry args={[.07, .07, .05, 12]} /><meshStandardMaterial color={cell.health} emissive={cell.health} emissiveIntensity={1.8} /></mesh>
-      </group>
-    })}
-    <mesh position={[0, 1.04, 0]}><boxGeometry args={[4.8, .12, 3]} /><meshStandardMaterial color={cyan} transparent opacity={.18} metalness={.8} /></mesh>
-    <EnergyArc radius={3.1} offset={0} color={cyan} speed={1} />
-    <EnergyArc radius={2.8} offset={Math.PI / 2} color={violet} speed={-1.2} />
-    <SensorRing radius={3.7} color={cyan} speed={1} />
-    <SensorRing radius={4.15} color={violet} speed={-.7} />
-  </group>
-}
-
-export function FleetOrb({ risk = 'low', active = false }: { risk?: 'low' | 'medium' | 'high'; active?: boolean }) {
-  const color = risk === 'high' ? amber : risk === 'medium' ? violet : lime
-  const ref = useRef<THREE.Group>(null)
-  useFrame(({ clock }) => { if (ref.current) ref.current.rotation.y = clock.getElapsedTime() * .35 })
-  return <Float speed={active ? 2 : 1} rotationIntensity={active ? .6 : .2} floatIntensity={active ? .8 : .35}><group ref={ref}>
-    <mesh><sphereGeometry args={[.58, 20, 20]} /><meshStandardMaterial color="#142b3b" metalness={.85} roughness={.2} /></mesh>
-    <mesh scale={1.04}><torusGeometry args={[.68, .025, 8, 48]} /><meshBasicMaterial color={color} /></mesh>
-    <mesh rotation={[Math.PI / 2, 0, 0]} scale={.82}><torusGeometry args={[.72, .018, 8, 48]} /><meshBasicMaterial color={cyan} transparent opacity={.65} /></mesh>
-    <Sparkles count={active ? 22 : 8} scale={1.9} size={1.8} speed={1} color={color} />
-  </group></Float>
-}
-
-export function Scene({ mode, exploded = false, scan = false, charge = .8, selected = 7, fleetRisk = 'low' }: { mode: SceneMode; exploded?: boolean; scan?: boolean; charge?: number; selected?: number; fleetRisk?: 'low' | 'medium' | 'high' }) {
-  if (mode === 'vehicle') return <VehicleScene risk={fleetRisk} scan={scan} charging={charge > .35} driving={!scan} />
-  return <group>
-    {mode === 'admin' ? <>
-      <FleetOrb risk="low" active={fleetRisk === 'low'} />
-      <group position={[-1.45, .35, -.3]} scale={.72}><FleetOrb risk="medium" active={fleetRisk === 'medium'} /></group>
-      <group position={[1.45, .2, -.35]} scale={.9}><FleetOrb risk="high" active={fleetRisk === 'high'} /></group>
-      <group position={[0, -1.25, 0]} scale={.65}><ReactorCore pulse={scan} /></group>
-      <EnergyArc radius={2.5} offset={0} color={cyan} speed={.8} />
-      <SensorRing radius={3.2} color={violet} speed={.55} />
-    </> : <>
-      <BatteryStack exploded={exploded} scan={scan} charge={charge} selected={selected} />
-      <group position={[0, .8, 0]} scale={.56}><ReactorCore pulse={scan} /></group>
-    </>}
-  </group>
-}
-
+export function BatteryStack({ exploded = false, scan = false, charge = .8, selected = 7 }: { exploded?: boolean; scan?: boolean; charge?: number; selected?: number }) { const group = useRef<THREE.Group>(null); const cells = useMemo(() => Array.from({ length: 16 }, (_, i) => ({ x: i % 4, z: Math.floor(i / 4), health: i === 7 ? amber : i === 12 ? violet : lime })), []); useFrame(({ clock }, delta) => { if (!group.current) return; group.current.rotation.y += delta * .12; group.current.position.y = Math.sin(clock.getElapsedTime() * .7) * .04 }); return <group ref={group} scale={1.28}><mesh position={[0, -1.1, 0]}><boxGeometry args={[4.8, .18, 3]} /><meshStandardMaterial color="#0c1e2c" metalness={.88} roughness={.2} /></mesh><mesh position={[-2.28, -.2, 0]}><boxGeometry args={[.12, 1.75, 2.9]} /><meshStandardMaterial color="#163447" metalness={.92} roughness={.18} /></mesh><mesh position={[2.28, -.2, 0]}><boxGeometry args={[.12, 1.75, 2.9]} /><meshStandardMaterial color="#163447" metalness={.92} roughness={.18} /></mesh><mesh position={[0, 1.04, 0]}><boxGeometry args={[4.8, .12, 3]} /><meshStandardMaterial color="#183849" transparent opacity={.88} metalness={.9} roughness={.16} /></mesh>{cells.map((cell, i) => { const x = (cell.x - 1.5) * (exploded ? 1.28 : 1); const z = (cell.z - 1.5) * (exploded ? 1.25 : 1); const y = exploded ? (i % 3) * .26 : 0; const isSelected = selected === i; return <group key={i} position={[x, y, z]}><mesh><boxGeometry args={[.78, 1.72, .78]} /><meshStandardMaterial color={isSelected ? '#38566a' : '#192e3e'} metalness={.7} roughness={.25} /></mesh><mesh position={[0, .02, .405]}><boxGeometry args={[.3, 1.36, .035]} /><meshStandardMaterial color={cell.health} emissive={cell.health} emissiveIntensity={isSelected || scan ? 2.5 : .9} /></mesh><mesh position={[0, .7, 0]}><cylinderGeometry args={[.07, .07, .05, 12]} /><meshStandardMaterial color={cell.health} emissive={cell.health} emissiveIntensity={1.8} /></mesh></group> })}<group position={[0, .92, 0]}>{[-1.5, -.5, .5, 1.5].map(x => <mesh key={x} position={[x, 0, 0]}><boxGeometry args={[.07, .035, 2.72]} /><meshStandardMaterial color={scan ? amber : cyan} emissive={scan ? amber : cyan} emissiveIntensity={scan ? 2.4 : 1.2} metalness={.9} roughness={.15} /></mesh>)}</group><mesh position={[0, 1.04, 0]}><boxGeometry args={[4.8, .12, 3]} /><meshStandardMaterial color={cyan} transparent opacity={.16} metalness={.8} /></mesh><mesh position={[0, 1.12, 0]}><boxGeometry args={[4.35, .025, 2.6]} /><meshBasicMaterial color={charge > .35 ? cyan : amber} transparent opacity={scan ? .36 : .18} /></mesh><EnergyArc radius={3.1} offset={0} color={cyan} speed={1} /><EnergyArc radius={2.8} offset={Math.PI / 2} color={violet} speed={-1.2} /><SensorRing radius={3.7} color={cyan} speed={1} /><SensorRing radius={4.15} color={violet} speed={-.7} /></group> }
+export function FleetOrb({ risk = 'low', active = false }: { risk?: 'low' | 'medium' | 'high'; active?: boolean }) { const color = risk === 'high' ? amber : risk === 'medium' ? violet : lime; const ref = useRef<THREE.Group>(null); useFrame(({ clock }) => { if (ref.current) ref.current.rotation.y = clock.getElapsedTime() * .35 }); return <Float speed={active ? 2 : 1} rotationIntensity={active ? .6 : .2} floatIntensity={active ? .8 : .35}><group ref={ref}><mesh><sphereGeometry args={[.58, 20, 20]} /><meshStandardMaterial color="#142b3b" metalness={.85} roughness={.2} /></mesh><mesh scale={1.04}><torusGeometry args={[.68, .025, 8, 48]} /><meshBasicMaterial color={color} /></mesh><Sparkles count={active ? 16 : 6} scale={1.9} size={1.8} speed={1} color={color} /></group></Float> }
+export function Scene({ mode, exploded = false, scan = false, charge = .8, selected = 7, fleetRisk = 'low' }: { mode: SceneMode; exploded?: boolean; scan?: boolean; charge?: number; selected?: number; fleetRisk?: 'low' | 'medium' | 'high' }) { if (mode === 'vehicle') return <VehicleScene risk={fleetRisk} scan={scan} charging={charge > .35} driving={!scan} />; return <group>{mode === 'admin' ? <><FleetOrb risk="low" active={fleetRisk === 'low'} /><group position={[-1.45, .35, -.3]} scale={.72}><FleetOrb risk="medium" active={fleetRisk === 'medium'} /></group><group position={[1.45, .2, -.35]} scale={.9}><FleetOrb risk="high" active={fleetRisk === 'high'} /></group><group position={[0, -1.25, 0]} scale={.65}><ReactorCore pulse={scan} /></group><EnergyArc radius={2.5} offset={0} color={cyan} speed={.8} /><SensorRing radius={3.2} color={violet} speed={.55} /></> : <><BatteryStack exploded={exploded} scan={scan} charge={charge} selected={selected} /><group position={[0, .8, 0]} scale={.56}><ReactorCore pulse={scan} /></group></>}</group> }
 export { cyan, violet, lime, amber }

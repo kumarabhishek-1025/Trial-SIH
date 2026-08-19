@@ -22,19 +22,22 @@ const Panel = ({ children, className = '' }: any) => <section className={`panel 
 
 function SceneCanvas({ mode, exploded = false, scan = false, selected = 7, fleetRisk = 'low', charge = .8 }: any) {
   const isVehicle = mode === 'vehicle'
-  return <SafeCanvas dpr={[1, 2]} camera={{ position: isVehicle ? [4.8, 2.4, 5.8] : [5, 3.2, 6], fov: isVehicle ? 42 : 38 }} mode={mode} charge={charge} fleetRisk={fleetRisk} scan={scan}>
+  return <SafeCanvas dpr={[1, 2]} camera={{ position: isVehicle ? [4.8, 2.4, 5.8] : [4.2, 2.4, 4.8], fov: isVehicle ? 42 : 32 }} mode={mode} charge={charge} fleetRisk={fleetRisk} scan={scan}>
     <color attach="background" args={['#06101b']} />
     <fog attach="fog" args={['#06101b', 8, 18]} />
     <ambientLight intensity={1.1} />
     <pointLight position={[3, 4, 4]} intensity={18} color={cyan} />
     <pointLight position={[-4, 2, -3]} intensity={14} color={violet} />
-    <Scene mode={mode} exploded={exploded} scan={scan} selected={selected} fleetRisk={fleetRisk} charge={charge} />
+    <group position={mode === 'owner' ? [1.25, 0.85, 0] : [0, 0, 0]}><Scene mode={mode} exploded={exploded} scan={scan} selected={selected} fleetRisk={fleetRisk} charge={charge} /></group>
     <OrbitControls enablePan={false} minDistance={3.5} maxDistance={10} autoRotate={!scan} autoRotateSpeed={isVehicle ? .5 : .35} />
   </SafeCanvas>
 }
 
 function Auth({ onEnter }: { onEnter: (role: 'owner' | 'admin') => void }) {
   const [role, setRole] = useState<'owner' | 'admin'>('owner')
+  const [exploded, setExploded] = useState(false)
+  const [scan, setScan] = useState(false)
+  const [selected, setSelected] = useState(7)
   return <main className="auth-page">
     <div className="auth-visual">
       <div className="brand-mark"><div className="brand-symbol"><Zap size={25} fill="currentColor" /></div><span>BATT<span>-X</span></span></div>
@@ -44,8 +47,15 @@ function Auth({ onEnter }: { onEnter: (role: 'owner' | 'admin') => void }) {
         <p>Turn every electron into an advantage with the intelligence layer for modern energy systems.</p>
       </div>
       <div className="auth-orbit vehicle-hero">
-        <SceneCanvas mode="vehicle" fleetRisk="low" charge={.94} />
-        <div className="vehicle-badge"><span className="pulse" />EV-42 · LIVE TELEMETRY</div>
+        <SceneCanvas mode="owner" exploded={exploded} scan={scan} selected={selected} fleetRisk="low" charge={.94} />
+        <div className="vehicle-badge"><span className={scan ? 'pulse amber-pulse' : 'pulse'} />{scan ? 'DIAGNOSTIC SCAN · ACTIVE' : exploded ? 'MODULE MAP · EXPLODED' : 'EV-42 · LIVE TELEMETRY'} </div>
+        <div className="auth-twin-controls">
+          <button className={exploded ? 'active' : ''} onClick={() => setExploded(!exploded)}><Orbit size={15} /> {exploded ? 'Assemble view' : 'Explode view'}</button>
+          <button className={scan ? 'active scan' : ''} onClick={() => setScan(!scan)}><Radio size={15} /> {scan ? 'Stop diagnostics' : 'Run diagnostics'}</button>
+        </div>
+        <div className="auth-module-map" aria-label="Battery module selector">
+          {Array.from({ length: 16 }, (_, i) => <button key={i} className={selected === i ? 'selected' : ''} onClick={() => setSelected(i)} aria-label={`Select module ${i + 1}`}><span /></button>)}
+        </div>
       </div>
       <div className="hero-stats">
         <span><strong>2,847</strong> assets understood</span>
