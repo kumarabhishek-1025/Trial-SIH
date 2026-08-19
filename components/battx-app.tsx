@@ -22,13 +22,13 @@ const Panel = ({ children, className = '' }: any) => <section className={`panel 
 
 function SceneCanvas({ mode, exploded = false, scan = false, selected = 7, fleetRisk = 'low', charge = .8 }: any) {
   const isVehicle = mode === 'vehicle'
-  return <SafeCanvas dpr={[1, 2]} camera={{ position: isVehicle ? [4.8, 2.4, 5.8] : [5, 3.2, 6], fov: isVehicle ? 42 : 38 }} mode={mode} charge={charge} fleetRisk={fleetRisk} scan={scan}>
+  return <SafeCanvas dpr={[1, 2]} camera={{ position: isVehicle ? [4.8, 2.4, 5.8] : [4.2, 2.4, 4.8], fov: isVehicle ? 42 : 32 }} mode={mode} charge={charge} fleetRisk={fleetRisk} scan={scan}>
     <color attach="background" args={['#06101b']} />
     <fog attach="fog" args={['#06101b', 8, 18]} />
     <ambientLight intensity={1.1} />
     <pointLight position={[3, 4, 4]} intensity={18} color={cyan} />
     <pointLight position={[-4, 2, -3]} intensity={14} color={violet} />
-    <Scene mode={mode} exploded={exploded} scan={scan} selected={selected} fleetRisk={fleetRisk} charge={charge} />
+    <group position={mode === 'owner' ? [1.25, 0.85, 0] : [0, 0, 0]}><Scene mode={mode} exploded={exploded} scan={scan} selected={selected} fleetRisk={fleetRisk} charge={charge} /></group>
     <OrbitControls enablePan={false} minDistance={3.5} maxDistance={10} autoRotate={!scan} autoRotateSpeed={isVehicle ? .5 : .35} />
   </SafeCanvas>
 }
