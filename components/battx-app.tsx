@@ -273,7 +273,7 @@ function VehicleLab() {
 }
 
 export default function BattxApp() {
-  const [loggedIn, setLoggedIn] = useState(false)
+  const [loggedIn, setLoggedIn] = useState(true)
   const [role, setRole] = useState<'owner' | 'admin'>('owner')
   const [view, setView] = useState('overview')
   const [mobileOpen, setMobileOpen] = useState(false)
