@@ -1,7 +1,7 @@
 'use client'
 
 import { useFrame } from '@react-three/fiber'
-import { Float, Sparkles, Trail, MeshTransmissionMaterial } from '@react-three/drei'
+import { Float, Sparkles, MeshTransmissionMaterial } from '@react-three/drei'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { VehicleScene } from '@/components/battx-vehicle'
@@ -14,14 +14,18 @@ const amber = '#ffb14a'
 type SceneMode = 'hero' | 'owner' | 'admin' | 'vehicle'
 
 function EnergyArc({ radius, offset, color = cyan, speed = 1 }: { radius: number; offset: number; color?: string; speed?: number }) {
-  const ref = useRef<THREE.Mesh>(null)
+  const ref = useRef<THREE.Group>(null)
   const points = useMemo(() => {
     const curve = new THREE.EllipseCurve(0, 0, radius, radius * .62, 0, Math.PI * 2, false, offset)
     return curve.getPoints(80).map((p) => new THREE.Vector3(p.x, p.y, 0))
   }, [radius, offset])
   const geometry = useMemo(() => new THREE.BufferGeometry().setFromPoints(points), [points])
   useFrame(({ clock }) => { if (ref.current) ref.current.rotation.z = clock.getElapsedTime() * speed * .18 })
-  return <line ref={ref} rotation={[Math.PI / 2, 0, 0]} geometry={geometry}><lineBasicMaterial color={color} transparent opacity={.7} /></line>
+  return <group ref={ref} rotation={[Math.PI / 2, 0, 0]}>
+    <lineSegments geometry={geometry}>
+      <lineBasicMaterial color={color} transparent opacity={.7} />
+    </lineSegments>
+  </group>
 }
 
 function SensorRing({ radius, color = cyan, speed = 1 }: { radius: number; color?: string; speed?: number }) {
